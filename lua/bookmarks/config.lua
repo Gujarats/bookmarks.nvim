@@ -7,10 +7,10 @@ function M.setup(user_config)
         storage_dir = "", -- default vim.fn.stdpath("data").."/bookmarks",
         mappings_enabled = true,
         keymap = {
-            toggle = "\\t", -- toggle bookmarks
+            toggle = "\\tt", -- toggle bookmarks
             close = "q", -- close bookmarks (buffer mapping)
-            add = "\\z", -- add bookmarks
-            add_global = "\\g", -- add global bookmarks
+            add = "\\gz", -- add bookmarks
+            add_global = "\\gs", -- add global bookmarks
             jump = "<CR>", -- jump from bookmarks
             delete = "dd", -- delete bookmarks
             order = "<space><space>", -- order bookmarks by frequency or updated_time
