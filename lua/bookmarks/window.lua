@@ -10,21 +10,25 @@ local focus_manager = (function()
     --- @alias WinType string
     --- @alias WinId integer
     local current_type = nil --- @type WinType | nil
-    local win_types = {}     --- @type WinType[]
-    local wins = {}          --- @type table<WinType, WinId>
+    local win_types = {} --- @type WinType[]
+    local wins = {} --- @type table<WinType, WinId>
 
     local function toogle()
         local next_type = nil
         for i, type in ipairs(win_types) do
             if type == current_type then
                 local next_i = i + 1
-                if next_i > #win_types then next_i = 1 end
+                if next_i > #win_types then
+                    next_i = 1
+                end
                 next_type = win_types[next_i]
                 break
             end
         end
 
-        if next_type == nil then next_type = win_types[1] end
+        if next_type == nil then
+            next_type = win_types[1]
+        end
 
         local next_win = wins[next_type]
         if next_win == nil then
@@ -39,15 +43,20 @@ local focus_manager = (function()
 
     return {
         toogle = toogle,
-        update_current = function(type) current_type = type end,
-        set = function(type, win) wins[type] = win end,
+        update_current = function(type)
+            current_type = type
+        end,
+        set = function(type, win)
+            wins[type] = win
+        end,
         register = function(type)
             local exist = vim.tbl_contains(win_types, type)
-            if not exist then table.insert(win_types, type) end
+            if not exist then
+                table.insert(win_types, type)
+            end
         end,
     }
 end)()
-
 
 function M.setup()
     config = require("bookmarks.config").get_data()
@@ -165,7 +174,7 @@ local function tags_autocmd(buffer)
             M.set_title(data.bufbb, string.format("Bookmarks[%d/%d]", cur_line, bookmarks_len), data.bw)
             M.preview_bookmark(item.filename, item.line)
         end,
-        buffer = buffer
+        buffer = buffer,
     })
 end
 
@@ -194,21 +203,31 @@ function M.open_bookmarks()
     data.bufb = pair.buf
     data.bufbw = pair.win
     data.bufbb = float.create_border(options).buf
-    api.nvim_buf_set_option(data.bufb, 'filetype', 'bookmarks')
+    api.nvim_buf_set_option(data.bufb, "filetype", "bookmarks")
 
-    vim.keymap.set("n", config.keymap.jump, require("bookmarks").jump,
-        { desc = "bookmarks jump", buffer = data.bufb, silent = true })
+    vim.keymap.set(
+        "n",
+        config.keymap.jump,
+        require("bookmarks").jump,
+        { desc = "bookmarks jump", buffer = data.bufb, silent = true }
+    )
     vim.keymap.set("n", "<2-LeftMouse>", require("bookmarks").jump, { buffer = data.bufb, silent = true })
-    vim.keymap.set("n", config.keymap.delete, require("bookmarks").delete,
-        { desc = "bookmarks delete", buffer = data.bufb, silent = true })
-    vim.keymap.set("n", config.keymap.order, function() require("bookmarks.list").refresh(true) end,
-        { desc = "bookmarks order", buffer = data.bufb, silent = true })
-    vim.keymap.set("n", config.keymap.close, function() require("bookmarks").close_bookmarks() end,
-        { desc = "bookmarks close", buffer = data.bufb, silent = true })
+    vim.keymap.set(
+        "n",
+        config.keymap.delete,
+        require("bookmarks").delete,
+        { desc = "bookmarks delete", buffer = data.bufb, silent = true }
+    )
+    vim.keymap.set("n", config.keymap.order, function()
+        require("bookmarks.list").refresh(true)
+    end, { desc = "bookmarks order", buffer = data.bufb, silent = true })
+    vim.keymap.set("n", config.keymap.close, function()
+        require("bookmarks").close_bookmarks()
+    end, { desc = "bookmarks close", buffer = data.bufb, silent = true })
 
     api.nvim_win_set_option(data.bufbw, "cursorline", true)
     api.nvim_win_set_option(data.bufbw, "wrap", false)
-    api.nvim_win_set_option(data.bufbw, "winhighlight", 'Normal:normal,CursorLine:' .. data.hl_cursorline_name)
+    api.nvim_win_set_option(data.bufbw, "winhighlight", "Normal:normal,CursorLine:" .. data.hl_cursorline_name)
     api.nvim_set_current_win(data.bufbw)
     bookmarks_autocmd(data.bufb)
 
@@ -217,17 +236,12 @@ function M.open_bookmarks()
 
     local set_key_opts = { silent = true, noremap = true, buffer = data.bufb }
     M.open_tags()
-    vim.keymap.set(
-        "n",
-        config.keymap.focus_tags,
-        function()
-            if api.nvim_win_is_valid(data.buftw) then
-                api.nvim_set_current_win(data.buftw)
-                focus_manager.update_current("tags")
-            end
-        end,
-        { desc = "bookmarks focus tags", silent = true, noremap = true, buffer = data.bufb }
-    )
+    vim.keymap.set("n", config.keymap.focus_tags, function()
+        if api.nvim_win_is_valid(data.buftw) then
+            api.nvim_set_current_win(data.buftw)
+            focus_manager.update_current("tags")
+        end
+    end, { desc = "bookmarks focus tags", silent = true, noremap = true, buffer = data.bufb })
     vim.keymap.set(
         "n",
         config.keymap.toogle_focus,
@@ -288,41 +302,31 @@ function M.open_tags()
     data.buft = pair.buf
     data.buftw = pair.win
     data.buftb = float.create_border(options).buf
-    api.nvim_buf_set_option(pair.buf, 'filetype', 'btags')
+    api.nvim_buf_set_option(pair.buf, "filetype", "btags")
     focus_manager.set("tags", data.buftw)
 
     local set_key_opts = { silent = true, noremap = true, buffer = data.buft }
+    vim.keymap.set("n", "<2-LeftMouse>", function()
+        M.change_tags()
+        api.nvim_set_current_win(data.bufbw)
+    end, { desc = "bookmarks change tags", silent = true, noremap = true, buffer = data.buft })
+    vim.keymap.set("n", "<CR>", function()
+        M.change_tags()
+        api.nvim_set_current_win(data.bufbw)
+    end, { desc = "bookmarks change tags", silent = true, noremap = true, buffer = data.buft })
+    vim.keymap.set("n", config.keymap.focus_bookmarks, function()
+        api.nvim_set_current_win(data.bufbw)
+        focus_manager.update_current("bookmarks")
+    end, { desc = "bookmarks focus", silent = true, noremap = true, buffer = data.buft })
     vim.keymap.set(
         "n",
-        "<2-LeftMouse>",
-        function()
-            M.change_tags()
-            api.nvim_set_current_win(data.bufbw)
-        end,
-        { desc = "bookmarks change tags", silent = true, noremap = true, buffer = data.buft }
+        config.keymap.toogle_focus,
+        focus_manager.toogle,
+        { desc = "bookmarks close", silent = true, noremap = true, buffer = data.buft }
     )
-    vim.keymap.set(
-        "n",
-        "<CR>",
-        function()
-            M.change_tags()
-            api.nvim_set_current_win(data.bufbw)
-        end,
-        { desc = "bookmarks change tags", silent = true, noremap = true, buffer = data.buft }
-    )
-    vim.keymap.set(
-        "n",
-        config.keymap.focus_bookmarks,
-        function()
-            api.nvim_set_current_win(data.bufbw)
-            focus_manager.update_current("bookmarks")
-        end,
-        { desc = "bookmarks focus", silent = true, noremap = true, buffer = data.buft }
-    )
-    vim.keymap.set("n", config.keymap.toogle_focus, focus_manager.toogle,
-        { desc = "bookmarks close", silent = true, noremap = true, buffer = data.buft })
-    vim.keymap.set("n", config.keymap.close, function() require("bookmarks").close_bookmarks() end,
-        { desc = "bookmarks close", buffer = data.buft, silent = true })
+    vim.keymap.set("n", config.keymap.close, function()
+        require("bookmarks").close_bookmarks()
+    end, { desc = "bookmarks close", buffer = data.buft, silent = true })
     M.write_tags()
 end
 
@@ -365,7 +369,7 @@ function M.write_tags()
     end
     table.sort(tags_list)
 
-    local current_line = 1;
+    local current_line = 1
     data.tags = {}
     data.tags[#data.tags + 1] = "ALL"
     for i, value in pairs(tags_list) do
@@ -386,13 +390,13 @@ function M.write_tags()
     api.nvim_buf_set_lines(data.buft, 0, -1, false, {})
     api.nvim_buf_set_lines(data.buft, 0, #show_tags, false, show_tags)
     api.nvim_buf_set_option(data.buft, "modifiable", false)
-    api.nvim_win_set_option(data.buftw, "winhighlight", 'Normal:normal,CursorLine:' .. data.hl_cursorline_name)
+    api.nvim_win_set_option(data.buftw, "winhighlight", "Normal:normal,CursorLine:" .. data.hl_cursorline_name)
     api.nvim_win_set_option(data.buftw, "cursorline", true)
     api.nvim_win_set_cursor(data.buftw, { current_line, 0 })
 end
 
 function M.change_tags()
-    local line = vim.fn.line('.')
+    local line = vim.fn.line(".")
     if data.current_tags == data.tags[line] then
         return false
     end
@@ -526,7 +530,7 @@ function M.preview_bookmark(filename, lineNumber)
         local cw = api.nvim_get_current_win()
         api.nvim_win_set_option(data.bufpw, "cursorline", true)
         api.nvim_win_set_option(data.bufpw, "number", false)
-        api.nvim_win_set_option(data.bufpw, "winhighlight", 'Normal:normal')
+        api.nvim_win_set_option(data.bufpw, "winhighlight", "Normal:normal")
 
         api.nvim_set_current_win(data.bufpw)
         if relative_line_number <= h then
@@ -568,8 +572,8 @@ function M.close_preview_border()
 end
 
 function M.open_add_win(title)
-    local ew = api.nvim_get_option("columns")
-    local eh = api.nvim_get_option("lines")
+    local ew = api.nvim_get_option_value("columns", {})
+    local eh = api.nvim_get_option_value("lines", {})
     local width, height = 100, 1
     local options = {
         width = width,
@@ -583,14 +587,15 @@ function M.open_add_win(title)
 
     local pairs = float.create_win(options)
     local border_pairs = float.create_border(options)
+    -- why the nvim functino is being called here ?
     api.nvim_set_current_win(pairs.win)
-    api.nvim_win_set_option(pairs.win, 'winhighlight', 'Normal:normal')
-    api.nvim_buf_set_option(pairs.buf, 'filetype', 'bookmarks_input')
+    api.nvim_win_set_option(pairs.win, "winhighlight", "Normal:normal")
+    api.nvim_buf_set_option(pairs.buf, "filetype", "bookmarks_input")
     vim.cmd("startinsert")
 
     return {
         pairs = pairs,
-        border_pairs = border_pairs
+        border_pairs = border_pairs,
     }
 end
 

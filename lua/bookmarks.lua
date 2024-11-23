@@ -22,8 +22,11 @@ function M.setup(user_config)
 end
 
 -- Add bookmark.
+-- I think the author is not using variable due to minimize the use of variable which leads to reduce memory usage cost
 function M.add_bookmarks(is_global)
-    l.add_bookmark(vim.fn.line('.'), api.nvim_get_current_buf(), vim.fn.line("$"), is_global)
+    local line = vim.fn.line(".")
+    local rows = vim.fn.line("$")
+    l.add_bookmark(line, rows, api.nvim_get_current_buf(), is_global)
 end
 
 -- Open bookmarks window.
@@ -59,7 +62,7 @@ end
 
 -- Delete bookmarks.
 function M.delete()
-    l.delete(vim.fn.line('.'))
+    l.delete(vim.fn.line("."))
 end
 
 return M
